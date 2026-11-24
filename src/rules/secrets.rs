@@ -148,6 +148,12 @@ pub static RULES: &[Rule] = &[
         "A Google API key is written in the file."
     ),
     secret!(
+        "secret.mailgun-key",
+        Critical,
+        r"\bkey-[0-9a-f]{32}\b",
+        "A Mailgun API key is written in the file."
+    ),
+    secret!(
         "secret.private-key",
         Critical,
         r"-----BEGIN (?:(?:RSA|EC|DSA|OPENSSH|PGP|ENCRYPTED) )?PRIVATE KEY(?: BLOCK)?-----\r?\n([A-Za-z0-9+/=]{20,})",
