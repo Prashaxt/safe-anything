@@ -156,7 +156,7 @@ pub static RULES: &[Rule] = &[
     secret!(
         "secret.telegram-bot-token",
         High,
-        r"\b[0-9]{8,10}:[A-Za-z0-9_\-]{35}\b",
+        r"\b([0-9]{8,10}:[A-Za-z0-9_\-]{35})(?:[^A-Za-z0-9_\-]|\z)",
         "A Telegram bot token is written in the file."
     ),
     secret!(
