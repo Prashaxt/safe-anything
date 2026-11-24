@@ -154,6 +154,12 @@ pub static RULES: &[Rule] = &[
         "A Mailgun API key is written in the file."
     ),
     secret!(
+        "secret.telegram-bot-token",
+        High,
+        r"\b[0-9]{8,10}:[A-Za-z0-9_\-]{35}\b",
+        "A Telegram bot token is written in the file."
+    ),
+    secret!(
         "secret.private-key",
         Critical,
         r"-----BEGIN (?:(?:RSA|EC|DSA|OPENSSH|PGP|ENCRYPTED) )?PRIVATE KEY(?: BLOCK)?-----\r?\n([A-Za-z0-9+/=]{20,})",
