@@ -17,7 +17,7 @@ To ignore a finding, put safe-anything:ignore in a comment on that line or the l
 #[derive(Parser)]
 #[command(
     version,
-    about = "Find vulnerabilities in any app, and in the AI agent setup that builds it."
+    about = "Find vulnerabilities in any app, and in the AI agent setup that builds it.",
     after_help = AFTER_HELP
 )]
 struct Cli {
