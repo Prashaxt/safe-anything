@@ -5,10 +5,20 @@ use std::process::ExitCode;
 use clap::Parser;
 use safe_anything::{Options, Severity, report};
 
+const AFTER_HELP: &str = "\
+Examples:
+  safe-anything .
+  safe-anything . --offline --fail-on never
+  safe-anything . --sarif > results.sarif
+  safe-anything mcp    serve scan and list_rules to AI agents over MCP
+
+To ignore a finding, put safe-anything:ignore in a comment on that line or the line above it, or list paths in .safe-anything-ignore.";
+
 #[derive(Parser)]
 #[command(
     version,
     about = "Find vulnerabilities in any app, and in the AI agent setup that builds it."
+    after_help = AFTER_HELP
 )]
 struct Cli {
     /// Folder or file to scan

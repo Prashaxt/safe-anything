@@ -210,3 +210,12 @@ fn secrets_are_redacted_in_every_output() {
         "only the value is masked:\n{out}"
     );
 }
+
+#[test]
+fn help_shows_mcp_and_how_to_ignore() {
+    let (code, out) = run(&["--help"]);
+    assert_eq!(code, 0);
+    assert!(out.contains("safe-anything mcp"), "{out}");
+    assert!(out.contains("safe-anything:ignore"), "{out}");
+    assert!(out.contains(".safe-anything-ignore"), "{out}");
+}

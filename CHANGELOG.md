@@ -36,6 +36,7 @@
 - Agent: new rule `agent.mcp-auto-approve` (high) for `"enableAllProjectMcpServers": true` in
   `.claude/settings*.json`, which starts every MCP server in the project's `.mcp.json` without asking about
   each one.
+- CLI: `safe-anything --help` now shows a few examples, including `safe-anything mcp`, and how to ignore a finding (`safe-anything:ignore` or `.safe-anything-ignore`).
 
 ## 1.0.2 (2026-11-23)
 
