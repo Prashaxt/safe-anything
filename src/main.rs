@@ -12,9 +12,12 @@ Examples:
   safe-anything .
   safe-anything . --offline --fail-on never
   safe-anything . --sarif > results.sarif
+  safe-anything . --write-baseline baseline.json
+  safe-anything . --baseline baseline.json
   safe-anything mcp    serve scan and list_rules to AI agents over MCP
 
-To ignore a finding, put safe-anything:ignore in a comment on that line or the line above it, or list paths in .safe-anything-ignore.";
+To ignore a finding, put safe-anything:ignore in a comment on that line or the line above it
+(follow it with rule ids to silence only those), or list paths in .safe-anything-ignore.";
 
 #[derive(Parser)]
 #[command(
