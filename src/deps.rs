@@ -48,6 +48,7 @@ pub fn parse_lockfile(file: &FileInfo, text: &str) -> Vec<Package> {
         "go.mod" => go_mod(file, text),
         "gemfile.lock" => gemfile_lock(file, text),
         "composer.lock" => composer_lock(file, text),
+        "pipfile.lock" => pipfile_lock(file, text),
         "pubspec.lock" => pubspec_lock(file, text),
         n if n.starts_with("requirements") && n.ends_with(".txt") => requirements(file, text),
         _ => Vec::new(),
@@ -266,6 +267,36 @@ fn composer_lock(file: &FileInfo, text: &str) -> Vec<Package> {
                 let at = find_from(text, &mut cursor, &format!("\"{n}\""));
                 out.push(pkg(
                     "Packagist",
+                    n,
+                    v,
+                    file,
+                    line_of(text, find_after(text, at, "\"version\"")),
+                ));
+            }
+        }
+    }
+    out
+}
+
+fn pipfile_lock(file: &FileInfo, text: &str) -> Vec<Package> {
+    let Ok(json) = serde_json::from_str::<Value>(text) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for key in ["default", "develop"] {
+        let Some(map) = json.get(key).and_then(Value::as_object) else {
+            continue;
+        };
+        let mut cursor = text.find(&format!("\"{key}\"")).unwrap_or(0);
+        for (n, p) in map {
+            let at = find_from(text, &mut cursor, &format!("\"{n}\""));
+            // A git, path, file or editable entry is not fetched from PyPI.
+            let local = ["git", "path", "file", "editable"]
+                .iter()
+                .any(|k| p.get(k).is_some());
+            if let (Some(v), false) = (p.get("version").and_then(Value::as_str), local) {
+                out.push(pkg(
+                    "PyPI",
                     n,
                     v,
                     file,

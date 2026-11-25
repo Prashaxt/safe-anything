@@ -275,5 +275,5 @@ fn deps() {
     // as a dependency): the `my-app@workspace:.` entry in web/yarn.lock, and the
     // gems in the `GIT` and `PATH` sections of rb/Gemfile.lock. Only the gems in
     // its two `GEM` sections count.
-    check_with("deps", options, Some(25));
+    check_with("deps", options, Some(27));
 }

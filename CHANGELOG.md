@@ -95,6 +95,7 @@
   `list_rules` tool include each rule's `fix`.
 - CLI: `safe-anything --help` now shows a few examples, including `safe-anything mcp`, and how to ignore a finding (`safe-anything:ignore` or `.safe-anything-ignore`).
 - Secrets: new rule `secret.google-oauth-secret` (high) for Google OAuth client secrets (`GOCSPX-` followed by 28 letters, digits, `_` or `-`).
+- Dependencies: `Pipfile.lock` is read, so Pipenv projects are checked against OSV.dev (`PyPI` ecosystem), `default` and `develop` packages alike. Entries from git, a path or an editable install are skipped.
 
 ## 1.0.2 (2026-11-23)
 
