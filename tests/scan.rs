@@ -273,7 +273,8 @@ fn deps() {
     };
     // Entries that are not fetched from a registry must be skipped (not counted
     // as a dependency): the `my-app@workspace:.` entry in web/yarn.lock, and the
-    // gems in the `GIT` and `PATH` sections of rb/Gemfile.lock. Only the gems in
-    // its two `GEM` sections count.
+    // gems in the `GIT` and `PATH` sections of rb/Gemfile.lock, and the editable
+    // git checkout of `requests` in pipenv/Pipfile.lock. Only the gems in its two
+    // `GEM` sections count.
     check_with("deps", options, Some(27));
 }

@@ -27,6 +27,12 @@
             "hashes": [],
             "index": "pypi",
             "version": "==7.4.0"
+        },
+        "requests": {
+            "editable": true,
+            "git": "https://github.com/psf/requests.git",
+            "ref": "0e322af87745eff34caffe4df68456ebc20d9068",
+            "version": "==2.19.0"
         }
     }
 }
