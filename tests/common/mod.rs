@@ -116,6 +116,10 @@ pub fn fake(name: &str) -> String {
             .to_uppercase(),
         "pulumi-token" => ["pu", "l-", &body(40, HEX)].concat(),
         "pulumi-upper" => ["pu", "l-", &body(40, HEX).to_uppercase()].concat(),
+        "sentry" => ["sntr", "yu_", &body(64, HEX)].concat(),
+        "supabase" => ["sb", "p_", &body(40, HEX)].concat(),
+        "grafana" => ["gl", "sa_", &body(32, MIXED), "_", &body(8, HEX)].concat(),
+        "doppler" => ["dp", ".pt.", &body(43, MIXED)].concat(),
         other => panic!("no fake value named {other}"),
     }
 }

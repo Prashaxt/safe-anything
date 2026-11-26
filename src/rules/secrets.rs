@@ -338,6 +338,30 @@ pub static RULES: &[Rule] = &[
         "A Postman API key is written in the file."
     ),
     secret!(
+        "secret.sentry-token",
+        Critical,
+        r"\bsntryu_[0-9a-f]{64}\b",
+        "A Sentry user auth token is written in the file."
+    ),
+    secret!(
+        "secret.supabase-token",
+        Critical,
+        r"\bsbp_[0-9a-f]{40}\b",
+        "A Supabase access token is written in the file."
+    ),
+    secret!(
+        "secret.grafana-token",
+        Critical,
+        r"\bglsa_[A-Za-z0-9]{32}_[A-Fa-f0-9]{8}\b",
+        "A Grafana service account token is written in the file."
+    ),
+    secret!(
+        "secret.doppler-token",
+        Critical,
+        r"\bdp\.pt\.[A-Za-z0-9]{43}\b",
+        "A Doppler personal token is written in the file."
+    ),
+    secret!(
         "secret.private-key",
         Critical,
         // A PEM file has real line breaks. A JSON string (a Google
