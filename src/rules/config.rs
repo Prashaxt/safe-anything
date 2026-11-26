@@ -21,6 +21,70 @@ fn shell(f: &FileInfo) -> bool {
 fn workflow(f: &FileInfo) -> bool {
     f.under(".github/workflows/") && f.ext_in(&["yml", "yaml"])
 }
+
+// A `#` inside a block scalar is script text, not a YAML comment.
+fn block_scalar_indent(line: &str) -> Option<(usize, Option<usize>)> {
+    let trimmed = line.trim_start();
+    let content = trimmed.strip_prefix("- ").map_or(trimmed, str::trim_start);
+    let indent = line.len() - content.len();
+    let (key, value) = content.split_once(':')?;
+    if !matches!(key.trim(), "run" | "script") {
+        return None;
+    }
+    let value = value.trim_start();
+    if !value.starts_with('|') && !value.starts_with('>') {
+        return None;
+    }
+    let indicator: Vec<char> = value[1..].split('#').next()?.trim().chars().collect();
+    let valid = match indicator.as_slice() {
+        [] => true,
+        [one] => matches!(one, '+' | '-' | '1'..='9'),
+        [one, two] => {
+            (matches!(one, '+' | '-') && matches!(two, '1'..='9'))
+                || (matches!(one, '1'..='9') && matches!(two, '+' | '-'))
+        }
+        _ => false,
+    };
+    let explicit = indicator
+        .iter()
+        .find(|c| c.is_ascii_digit())
+        .and_then(|c| c.to_digit(10))
+        .map(|n| indent + n as usize);
+    valid.then_some((indent, explicit))
+}
+
+fn in_workflow_block_scalar(text: &Text, line_no: usize) -> bool {
+    let mut block: Option<(usize, Option<usize>)> = None;
+    for n in 1..=line_no {
+        let line = text.line(n);
+        let indent = line.len() - line.trim_start().len();
+        if let Some((header_indent, content_indent)) = block {
+            if line.trim().is_empty() {
+                if n == line_no {
+                    return false;
+                }
+                continue;
+            }
+            if indent <= header_indent {
+                block = None;
+            } else {
+                let content_indent = content_indent.unwrap_or_else(|| {
+                    block = Some((header_indent, Some(indent)));
+                    indent
+                });
+                if n == line_no {
+                    return indent >= content_indent;
+                }
+                continue;
+            }
+        }
+        if let Some((header_indent, explicit_content_indent)) = block_scalar_indent(line) {
+            block = Some((header_indent, explicit_content_indent));
+        }
+    }
+    false
+}
+
 fn shell_or_workflow(f: &FileInfo) -> bool {
     shell(f) || workflow(f)
 }
@@ -54,7 +118,7 @@ pub static RULES: &[Rule] = &[
         "config.remote-script",
         Medium,
         shell_or_workflow,
-        r#"\b(?i:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b[^|\n]*?(?:https?://|\$\{?\w)[^|\n]*\|\s*(?:sudo\s+(?:--?(?:[ugCDhprtTU]|user|group|chdir|host|prompt|role|type|other-user|close-from|command-timeout)\s+(?:"[^"\n]*"|'[^'\n]*'|[\w.$/~][\w.${}/~-]*)\s+|-[ugCDhprtTU]\S+\s+|-[AbBEeHiKklnPSsVv]+\s+|--[\w-]+=\S*\s+|--(?:preserve-env|login|shell|non-interactive|background|stdin|set-home|preserve-groups|askpass|bell|reset-timestamp|remove-timestamp)\s+)*(?:--\s+)?)?(?:sh|bash|zsh|python3?|(?i:iex|invoke-expression))\b|\b(?:ba|z|da|k)?sh\s+(?:-[A-Za-z]+\s+)*?-[A-Za-z]*c[A-Za-z]*\s+\\?["']?(?:\$\(|`)\s*(?:curl|wget)\b(?:[^()`\n]|\([^()`\n]*\))*?(?:https?://|\$\{?\w)"#,
+        r#"\b(?i:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b[^|\n]*?(?:https?://|\$\{?\w)[^|\n]*\|\s*(?:sudo\s+(?:(?:-[AbBEeHiKklnPSsVv]*[ugCDhprtTU]|--(?:user|group|chdir|host|prompt|role|type|other-user|close-from|command-timeout))\s+(?:"[^"\n]*"|'[^'\n]*'|[\w.$/~][\w.${}/~-]*)\s+|-[AbBEeHiKklnPSsVv]*[ugCDhprtTU](?:"[^"\n]*"|'[^'\n]*'|[^\s;|&`<>()"']+)\s+|-[AbBEeHiKklnPSsVv]+\s+|--[\w-]+=\S*\s+|--(?:preserve-env|login|shell|non-interactive|background|stdin|set-home|preserve-groups|askpass|bell|reset-timestamp|remove-timestamp)\s+)*(?:--\s+)?)?(?:sh|bash|zsh|python3?|(?i:iex|invoke-expression))\b|\b(?:ba|z|da|k)?sh\s+(?:[-+]o\s+[\w-]+\s+|-[A-Za-z]+\s+)*?-[A-Za-z]*c[A-Za-z]*\s+\\?["']?(?:\$\(|`)\s*(?:curl|wget)\b(?:[^()`\n]|\([^()`\n]*\))*?(?:https?://|\$\{?\w)"#,
         None,
         "A script is downloaded and piped straight into a shell, with no pinning or checksum.",
         "Download to a file, verify a pinned checksum or signature, then run it; or use a package manager."
@@ -397,9 +461,15 @@ pub fn keep(file: &FileInfo, text: &Text, f: &Finding, hcl: &mut HclWalk) -> boo
             FROM.captures(text.line(f.line))
                 .is_none_or(|c| !stages.contains(&c[1].to_ascii_lowercase()))
         }
-        "config.gha-script-injection" if workflow(file) => YAML_KEY
-            .captures(text.line(f.line))
-            .is_none_or(|c| &c[1] == "run" || &c[1] == "script"),
+        "config.gha-script-injection" if workflow(file) => {
+            let line = text.line(f.line);
+            let yaml_comment =
+                line.trim_start().starts_with('#') && !in_workflow_block_scalar(text, f.line);
+            !yaml_comment
+                && YAML_KEY
+                    .captures(line)
+                    .is_none_or(|c| &c[1] == "run" || &c[1] == "script")
+        }
         // In a workflow only a `run:` step (or a line of its block) runs; a step `name:` or a
         // commented-out line doesn't.
         "config.remote-script" if workflow(file) => {
